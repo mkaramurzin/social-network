@@ -1,15 +1,41 @@
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.core.paginator import Paginator
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django import forms
 
-from .models import User
+from .models import User, Post
 
+class NewPostForm(forms.Form):
+    post_text = forms.Field(widget=forms.Textarea(
+        {'name': 'text', 'maxlength': 255, 'class': 'form-control', 'id': 'new-text', 'placeholder': "What's happening?"}), label='')
 
 def index(request):
-    return render(request, "network/index.html")
 
+    if request.method == 'POST':
+        form = NewPostForm(request.POST)
+        if form.is_valid():
+            Post.objects.create(
+                user = request.user,
+                text = form.cleaned_data["post_text"]
+            )
+            return HttpResponseRedirect(reverse('index'))
+
+    posts = Post.objects.all()
+    posts = posts.order_by("-timestamp").all()
+    paginator = Paginator(posts, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "network/index.html", {
+        "posts": page_obj,
+        "form": NewPostForm()
+    })
 
 def login_view(request):
     if request.method == "POST":
@@ -61,3 +87,8 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
+
+def user(request, username):
+    return render(request, "network/user.html", {
+        "username": username
+    })

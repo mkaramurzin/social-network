@@ -1,0 +1,25 @@
+.body {
+    padding: 20px;
+}
+
+#new-div {
+    padding: 20px;
+    height: fit-content;
+}
+
+#new-text {
+    width: 100%;
+    display: block;
+    min-height: 100px;
+    max-height: 100px;
+}
+
+#post-div {
+    height: fit-content;
+    padding: 40px;
+}
+
+.fa-heart{
+    color: red !important;
+    cursor: pointer;
+}

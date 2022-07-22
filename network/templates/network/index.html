@@ -1,5 +1,26 @@
 {% extends "network/layout.html" %}
+{% load static %}
 
 {% block body %}
-    TODO
+    <h1>All Posts</h1>
+    <div id="new-div" class="form-control">
+        <h3>New Post</h3>
+        <form id="new-form" method="POST">
+            {% csrf_token %}
+            {{ form }}
+            <input type="submit" class="btn btn-primary" value="Post">
+        </form>
+    </div>
+
+    {% for post in posts %}
+        <div id="post-div" class="form-control">
+            <a><strong>{{ post.user }}</strong></a>
+            <p>{{ post.timestamp }}</p>
+            <p>{{ post.text }}</p>
+        </div>
+    {% endfor %}
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/addpost.js' %}"></script>
 {% endblock %}
