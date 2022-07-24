@@ -1,0 +1,12 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <div id="user-info">
+        <h3>{{ username }}</h6>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/scripts.js' %}"></script>
+{% endblock %}

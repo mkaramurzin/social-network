@@ -23,3 +23,8 @@
     color: red !important;
     cursor: pointer;
 }
+
+#user-info {
+    height: fit-content;
+    padding: 30px;
+}

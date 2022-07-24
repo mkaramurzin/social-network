@@ -8,8 +8,9 @@ from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django import forms
+from django.db.models import OuterRef, Subquery, Count, Exists
 
-from .models import User, Post
+from .models import Like, User, Post
 
 class NewPostForm(forms.Form):
     post_text = forms.Field(widget=forms.Textarea(
@@ -26,8 +27,12 @@ def index(request):
             )
             return HttpResponseRedirect(reverse('index'))
 
-    posts = Post.objects.all()
-    posts = posts.order_by("-timestamp").all()
+    if request.user.is_authenticated:
+        likes = Like.objects.filter(post=OuterRef('id'), user_id=request.user)
+        posts = Post.objects.filter().order_by(
+            '-timestamp').annotate(current_like=Count(likes.values('id')))
+    else:
+        posts = Post.objects.order_by("-timestamp").all()
     paginator = Paginator(posts, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -88,7 +93,25 @@ def register(request):
     else:
         return render(request, "network/register.html")
 
-def user(request, username):
+def profile(request, username):
+
     return render(request, "network/user.html", {
-        "username": username
+        "username": username,
+        "posts": Post.objects.filter(user=User.objects.get(username=username)).order_by("-timestamp").all()
+    })
+
+def like(request, id):
+    post = Post.objects.get(id=id)
+    like = Like.objects.get_or_create(user=request.user, post=post)
+    css_class = 'fas fa-heart'
+
+    # if like already exists
+    if not like[1]:
+        css_class = 'far fa-heart'
+        Like.objects.filter(user=request.user, post=post).delete()
+    
+    likes = Like.objects.filter(post=post).count()
+
+    return JsonResponse({
+        "like": id, "css_class": css_class, "likes": likes
     })

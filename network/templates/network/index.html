@@ -17,10 +17,14 @@
             <a><strong>{{ post.user }}</strong></a>
             <p>{{ post.timestamp }}</p>
             <p>{{ post.text }}</p>
+            <div data-id="{{post.id}}"
+                class="card-link {% if post.current_like > 0 %} fas {%else%} far {% endif %} fa-heart">&nbsp<small
+                class="text-muted">{{post.like_set.count}}</small>
+            </div>
         </div>
     {% endfor %}
 {% endblock %}
 
 {% block script %}
-    <script src="{% static 'network/addpost.js' %}"></script>
+    <script src="{% static 'network/scripts.js' %}"></script>
 {% endblock %}
