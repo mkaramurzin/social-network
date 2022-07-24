@@ -10,7 +10,9 @@ from django.contrib.auth.decorators import login_required
 from django import forms
 from django.db.models import OuterRef, Subquery, Count, Exists
 
-from .models import Like, User, Post
+from .models import Following, Like, User, Post
+
+MAX_POSTS = 10
 
 class NewPostForm(forms.Form):
     post_text = forms.Field(widget=forms.Textarea(
@@ -33,7 +35,7 @@ def index(request):
             '-timestamp').annotate(current_like=Count(likes.values('id')))
     else:
         posts = Post.objects.order_by("-timestamp").all()
-    paginator = Paginator(posts, 10)
+    paginator = Paginator(posts, MAX_POSTS)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -95,9 +97,31 @@ def register(request):
 
 def profile(request, username):
 
+    profile_user = User.objects.get(username=username)
+
+    if request.user.is_authenticated:
+        likes = Like.objects.filter(post=OuterRef('id'), user_id=request.user)
+        posts = Post.objects.filter(user=profile_user).order_by(
+            '-timestamp').annotate(current_like=Count(likes.values('id')))
+        following = Following.objects.filter(follower=request.user, following=profile_user).count()
+    else:
+        posts = Post.objects.filter(user=profile_user).order_by("-timestamp").all()
+        following = 0
+
+    paginator = Paginator(posts, MAX_POSTS)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    followers = Following.objects.filter(following=profile_user).count()
+    follow_count = Following.objects.filter(follower=profile_user).count()
+
     return render(request, "network/user.html", {
-        "username": username,
-        "posts": Post.objects.filter(user=User.objects.get(username=username)).order_by("-timestamp").all()
+        "user": profile_user,
+        "posts": page_obj,
+        "followers": followers,
+        "total_posts": Post.objects.filter(user=profile_user).count(),
+        "is_following": following > 0,
+        "following": follow_count
     })
 
 def like(request, id):
@@ -115,3 +139,48 @@ def like(request, id):
     return JsonResponse({
         "like": id, "css_class": css_class, "likes": likes
     })
+
+def follow(request, id):
+
+    result = 'Follow'
+    user_follower = User.objects.get(id=id)
+    follower = Following.objects.get_or_create(
+        follower=request.user, following=user_follower)
+    if not follower[1]:
+        Following.objects.filter(
+            follower=request.user, following=user_follower).delete()
+        result = 'Unfollow'
+    total_followers = Following.objects.filter(
+        following=user_follower).count()
+
+    return JsonResponse({"result": result, "followers": total_followers})
+
+def following(request):
+
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect('login')
+
+    following = Following.objects.filter(follower=request.user)
+    posts = Post.objects.filter(user_id__in=following.values('following_id')).order_by('-timestamp').all()
+    
+    likes = Like.objects.filter(post=OuterRef('id'), user_id=request.user)
+    posts = posts.annotate(current_like=Count(likes.values('id')))
+
+    paginator = Paginator(posts, MAX_POSTS)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "network/following.html", {
+        "posts": page_obj,
+    })
+
+@csrf_exempt
+def edit(request):
+    data = json.loads(request.body)
+
+    post = Post.objects.get(id=data.get("id", ""))
+
+    post.text = data.get("new_text", "")
+    post.save()
+
+    return JsonResponse({"message": "Post edited successfully.", "text": post.text})

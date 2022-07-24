@@ -3,7 +3,41 @@
 
 {% block body %}
     <div id="user-info">
-        <h3>{{ username }}</h6>
+        <h3>{{ user.username }}</h3>
+        <p id="followers">Followers: {{ followers }}</p>
+        <p>Following: {{ following }}</p>
+        <p>Posts: {{ total_posts }}</p>
+
+        {% if user != request.user and request.user.is_authenticated %}
+            {% if is_following %}
+                <Button id="follow" class="btn btn-sm btn-outline-secondary" data-id="{{ user.id }}">Unfollow</Button>
+            {% else %}
+                <Button id="follow" class="btn btn-sm btn-outline-primary" data-id="{{ user.id }}">Follow</Button>
+            {% endif %}
+        {% endif %}
+
+    </div>
+    <div>
+        {% for post in posts %}
+        <div id="post-div" class="form-control">
+            <strong>{{ post.user.username }}</strong>
+            <p>{{ post.timestamp }}</p>
+            <div id="post{{post.id}}">
+                <p id="text">{{ post.text }}</p>
+                <form id="edit-form" style="display: none;">
+                    <textarea maxlength="255" id="new-text"></textarea>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </form>
+            </div>
+            <div data-id="{{post.id}}"
+                class="card-link {% if post.current_like > 0 %} fas {%else%} far {% endif %} fa-heart">&nbsp<small
+                class="text-muted">{{post.like_set.count}}</small>
+            </div>
+            {% if request.user == post.user %}
+                <button data-id="{{post.id}}" id="edit-btn" class="btn btn-sm btn-outline-primary" style="display: block;">Edit</button>
+            {% endif %}
+        </div>
+    {% endfor %}
     </div>
 {% endblock %}
 

@@ -1,0 +1,20 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    {% for post in posts %}
+        <div id="post-div" class="form-control">
+            <a href="{% url 'profile' post.user.username %}"><strong>{{ post.user.username }}</strong></a>
+            <p>{{ post.timestamp }}</p>
+            <p>{{ post.text }}</p>
+            <div data-id="{{post.id}}"
+                class="card-link {% if post.current_like > 0 %} fas {%else%} far {% endif %} fa-heart">&nbsp<small
+                class="text-muted">{{post.like_set.count}}</small>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/scripts.js' %}"></script>
+{% endblock %}

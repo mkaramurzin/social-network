@@ -30,8 +30,8 @@ class Post(models.Model):
 #         return f"{self.user}:/n{self.text}"
 
 class Following(models.Model):
-    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="following_user")
-    posts = models.ManyToManyField("Post", related_name="following_posts")
+    follower = models.ForeignKey("User", on_delete=models.CASCADE, related_name="follower_user", default=None)
+    following = models.ForeignKey("User", on_delete=models.CASCADE, related_name="following_user", default=None)
 
 class Like(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, default=None)
