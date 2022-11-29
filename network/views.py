@@ -12,7 +12,7 @@ from django.db.models import OuterRef, Subquery, Count, Exists
 
 from .models import Following, Like, User, Post
 
-MAX_POSTS = 10
+MAX_POSTS = 2
 
 class NewPostForm(forms.Form):
     post_text = forms.Field(widget=forms.Textarea(
