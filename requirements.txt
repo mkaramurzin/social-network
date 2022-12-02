@@ -1,2 +1,1 @@
-django
-whitenoise
+Django==4.1
